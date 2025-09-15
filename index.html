@@ -1,11 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Flipbook Uji Coba</title>
+  <title>PDF Viewer dengan Pertanyaan</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #pdf-container { width: 100%; height: 100vh; overflow: auto; background: #ccc; }
+    canvas { display: block; margin: 0 auto; }
+    /* Overlay blok pertanyaan */
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #overlay-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 10px 5px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .lanjut { background: green; color: white; }
+    .batal { background: red; color: white; }
+  </style>
 </head>
 <body>
-  <h1>Halo, Flipbook Siswa!</h1>
-  <p>Jika halaman ini muncul, berarti GitHub Pages sudah aktif 😊</p>
+
+<div id="pdf-container"></div>
+
+<!-- Overlay pertanyaan -->
+<div id="overlay">
+  <div id="overlay-content">
+    <h3>Pertanyaan Halaman 10</h3>
+    <label>Nama:</label>
+    <input type="text" id="nama" required>
+    <label>Kelas:</label>
+    <input type="text" id="kelas" required>
+    <label>Pertanyaan: Siapa aktor dari cerita di halaman ini?</label>
+    <textarea id="jawaban" maxlength="100" required></textarea>
+    <br>
+    <button class="lanjut" onclick="lanjutkan()">Lanjut</button>
+    <button class="batal" onclick="batal()">Batal</button>
+  </div>
+</div>
+
+<script>
+const url = "https://dn790000.ca.archive.org/0/items/CeritaAnak/Cerita%20Rakyat%20Nusantara%202.pdf";
+
+let pdfDoc = null;
+let currentPage = 1;
+const pdfContainer = document.getElementById("pdf-container");
+
+pdfjsLib.getDocument(url).promise.then(pdf => {
+  pdfDoc = pdf;
+  renderPage(currentPage);
+});
+
+function renderPage(num) {
+  pdfDoc.getPage(num).then(page => {
+    const viewport = page.getViewport({ scale: 1.3 });
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    // Hapus halaman lama
+    pdfContainer.innerHTML = "";
+    pdfContainer.appendChild(canvas);
+
+    const renderContext = {
+      canvasContext: ctx,
+      viewport: viewport
+    };
+    page.render(renderContext);
+
+    // Jika masuk halaman 10 → tampilkan overlay
+    if (num === 10) {
+      document.getElementById("overlay").style.display = "flex";
+    }
+  });
+}
+
+function lanjutkan() {
+  const nama = document.getElementById("nama").value.trim();
+  const kelas = document.getElementById("kelas").value.trim();
+  const jawaban = document.getElementById("jawaban").value.trim();
+
+  if (!nama || !kelas || !jawaban) {
+    alert("Harap isi semua kolom!");
+    return;
+  }
+
+  document.getElementById("overlay").style.display = "none";
+  if (currentPage < pdfDoc.numPages) {
+    currentPage++;
+    renderPage(currentPage);
+  }
+}
+
+function batal() {
+  alert("Anda tidak bisa melanjutkan ke halaman berikutnya!");
+  document.getElementById("overlay").style.display = "flex"; // tetap blok
+}
+</script>
+
 </body>
 </html>
